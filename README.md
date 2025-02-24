@@ -8,5 +8,4 @@
 ## Setup:
 1. Clone the repository:
    ```bash
-   git clone <sshAddress>
-   ...
+   git clone git@github.com:LinkePaul/SPIKES_private.git
