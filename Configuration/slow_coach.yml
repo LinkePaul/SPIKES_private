@@ -1,0 +1,9 @@
+sweep_points:   1001      # number of points
+start_freq:     300e6     # Hz
+stop_freq:      6e9       # Hz
+res_bw:         1e4      # Hz
+vid_bw:         1e4      # Hz
+attenuation:    0         # dB 
+
+mode:           HIGH-RES  # Mode of operation: HIGH-RES or FAST
+num_aver:       2         # number of max hold sweeps
