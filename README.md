@@ -1,7 +1,7 @@
 # SPIKES: headS on PIKES
 
 ## Requirements:
-- Python 3.13 (Developed on 3.13.2)
+- Python 3.13
 - tkinter 8.6
 - Virtual environment
 
