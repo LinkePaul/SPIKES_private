@@ -8,4 +8,5 @@ attenuation:    10        # dB
 mode:           FAST      # Mode of operation: HIGH-RES or FAST
 refresh_period: 1         # seconds (int or float)
 reset_period:   5         # seconds (integer)
+
 total_time:     60        # seconds (integer)

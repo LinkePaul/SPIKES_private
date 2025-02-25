@@ -22,11 +22,7 @@ class App(ctk.CTk):
         
         self.title("SPIKES - Spectrum Plotter and Interfacing Kit for EMI Scanning")
         
-        #ctk.deactivate_automatic_dpi_awareness
-        #self.after(0, ctk.deactivate_automatic_dpi_awareness)
-        #self.geometry("2560x1466+-12+-2")
-        
-        self.configure(fg_color=styling_options.color_scheme['bg_color'])
+        self.configure(fg_color=styling_options.color_scheme['bg_color'], text_color=styling_options.color_scheme['text_color'])
         
         self.controls = frames.Controls(self)
         self.controls.place(x=20, y=20)
@@ -44,8 +40,8 @@ class App(ctk.CTk):
         self.initial_height = self.winfo_height()
 
         self.bind("<Configure>", self.on_resize)
-        #self.attributes('-fullscreen', True)
         self.wm_attributes('-zoomed', True)
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
         
     def on_resize(self, event) -> None:
         """Triggers on resizing of the application window and adjusts the layout of its components accordingly.
@@ -73,7 +69,20 @@ class App(ctk.CTk):
 
         self.initial_width = self.winfo_width()
         self.initial_height = self.winfo_height()
-                    
+    
+    def on_close(self) -> None:
+        """Show confirmation dialog before closing
+        """
+        if frames.plot_object.lines == [] and frames.progress_object.progress_bar.get() == 0:
+            self.destroy()
+            return
+
+        dialog = frames.ProceedDialog(self)
+        result = dialog.show()
+        if result:
+            self.destroy()
+            return        
+            
 if __name__ == "__main__":
     app = App()
     app.mainloop()

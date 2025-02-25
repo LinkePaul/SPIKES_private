@@ -119,6 +119,10 @@ class SpectrumControl(GPIBDevice):
             
             if 'trace_type' in kwargs:
                 self.write(f'TRAC1:TYPE {kwargs["trace_type"]}')
+            elif 'mode' in kwargs and kwargs['mode'] == 'HIGH-RES':
+                self.write(f'TRAC1:TYPE WRIT')
+            elif 'mode' in kwargs and kwargs['mode'] == 'FAST':
+                self.write(f'TRAC1:TYPE MAXH')
             elif 'trace_type' in self.standard_values:
                 self.write(f'TRAC1:TYPE {self.standard_values["trace_type"]}')
             else:
@@ -137,9 +141,22 @@ class SpectrumControl(GPIBDevice):
             
             sweep_time = self.query(":SENSe:SWEep:TIME?")
             
-            if float(sweep_time) == 4000:
-                error_message.append("Sweep time is at maximum value, proceeding will likely lead to crash.\n         Consider reducing the frequency range or resolution bandwidth.")
-        
+            if float(sweep_time) > 60*10 and float(sweep_time) <= 60*20:
+                error_message.append("Sweep time exceeds 10 minutes.\n         Please note that it is not possible to interrupt without accessing the Spectrum Analyzer.")
+            elif float(sweep_time) > 60*20 and float(sweep_time) <= 60*30:
+                error_message.append("Sweep time exceeds 20 minutes.\n         Please note that it is not possible to interrupt without accessing the Spectrum Analyzer.")
+            elif float(sweep_time) > 60*30 and float(sweep_time) <= 60*40:
+                error_message.append("Sweep time exceeds 30 minutes.\n         Please note that it is not possible to interrupt without accessing the Spectrum Analyzer.") 
+            elif float(sweep_time) > 60*40 and float(sweep_time) <= 60*50:
+                error_message.append("Sweep time exceeds 40 minutes.\n         Please note that it is not possible to interrupt without accessing the Spectrum Analyzer.")
+            elif float(sweep_time) > 60*50 and float(sweep_time) <= 60*60:
+                error_message.append("Sweep time exceeds 50 minutes.\n         Please note that it is not possible to interrupt without accessing the Spectrum Analyzer.")       
+            elif float(sweep_time) > 60*60 and float(sweep_time) < 4000:
+                error_message.append("Sweep time exceeds 60 minutes.\n         Please note that it is not possible to interrupt without accessing the Spectrum Analyzer.")
+            elif float(sweep_time) == 4000:
+                error_message = "Sweep time is at (or above) maximum value, proceeding would lead to crash.\n         Reduce frequency range or increase bandwidth."
+                return float(sweep_time), error_message, True
+                
         except socket_error as e:
             error_message.append("Check ethernet connection to GPIB-Controller")
         

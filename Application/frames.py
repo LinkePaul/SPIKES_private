@@ -2,7 +2,6 @@
 """
 import customtkinter as ctk
 import threading
-import time
 
 import backend
 import plotting
@@ -103,7 +102,7 @@ class Controls(ctk.CTkFrame):
         
         self.save_button = ctk.CTkButton(
                                     self.control_frame,
-                                    command=self.save,
+                                    command=self.click_save,
                                     width=self.widget_width,
                                     height=self.widget_height, 
                                     text='Save', 
@@ -185,10 +184,7 @@ class Controls(ctk.CTkFrame):
         global old_choice
         hint = None
         
-        prc = ProceedDialog()
-        proceed = prc.show(self)
-
-        if proceed==False:
+        if self.proceed_dialog() == False:
             return
         
         self.config_sel = choice
@@ -217,7 +213,29 @@ class Controls(ctk.CTkFrame):
             self.sweep_time, self.mode = backend.load_config(self.config_sel)
             
         except ValueError:
-            self.sweep_time, self.mode, hint = backend.load_config(self.config_sel)
+            try:
+                self.sweep_time, self.mode, hint = backend.load_config(self.config_sel)
+            except ValueError:
+                self.sweep_time, self.mode, hint, controls = backend.load_config(self.config_sel)
+                self.set_controls(controls)
+                text = "\n".join([
+                            f'Time per Sweep: {round(self.sweep_time, 3)} s ',
+                            '',
+                            f'   Hint: {hint}',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                        ])
+                Coms.update_coms(coms_object, text)
+                self.clear_plot()
+                old_choice = self.config_sel
+                self.configurations.mode_label.pack(side="top", pady=(15,0), anchor='n')
+                self.configurations.pack(side='top', fill='both', expand=True)
+                self.configurations.write_configuration(config_dicts[self.config_sel])
+                return
             
         except KeyError:
             text = "\n".join([
@@ -272,11 +290,13 @@ class Controls(ctk.CTkFrame):
                 for i in range(len(hint)):
                     text = "\n".join([text,
                     f' Hint {i+1}: {hint[i]}'])
+                for line in range(6-len(hint)):
+                    text = "\n".join([text, ''])
 
         else:
             text = (f"Time per Sweep: {round(self.sweep_time, 3)} s \n\n\n\n\n\n\n\n\n")
         Coms.update_coms(coms_object, text)
-        self.click_clear_plot()
+        self.clear_plot()
 
     def click_start(self) -> None:
         """Starts a new thread to call backend.start_measurement() with the selected configuration.
@@ -336,23 +356,38 @@ class Controls(ctk.CTkFrame):
         }
         self.set_controls(self.no_controls_state)
         
+    def proceed_dialog(self) -> bool:
+        
+        if plot_object.lines != []:
+            proc_obj = ProceedDialog()
+            proceed = proc_obj.show()
+            
+            if proceed==False:
+                self.select_config.set(old_choice)
+                return proceed
+        
     def click_clear_plot(self) -> None:
+        
+        proceed = self.proceed_dialog()
+        if proceed == False:
+            return    
+        self.clear_plot()
+
+    def clear_plot(self) -> None:
         """Clears the plot and resets the progress bar.
-        """
+        """        
         plot_object.clear_plot()
+        plot_object.lines = []
         progress_object.update_progress(0)
 
-    def save(self) -> None:
+    def click_save(self) -> None:
         """Not implemented yet.
         """
-        self.save_dialog()
-
-    def proceed_dialog(self) -> bool:
-        return ProceedDialog.show()
-
-    def save_dialog(self) -> None:
-        self.dialog_window = ctk.CTkInputDialog()
-
+        if plot_object.lines != []:
+            save_obj = SaveDialog()
+            save = save_obj.show()
+            print(save)
+        
     def resize(self, height: int) -> None:
         """Resizes the control frame to fit new window height (width stays the same).
 
@@ -1030,23 +1065,62 @@ class Coms(ctk.CTkFrame):
 class ProceedDialog(ctk.CTkToplevel):
     """Creates a popup to ask user if they want to proceed.
     """
-
-    def __init__(self, parent=None, title="Do you want to proceed?", text="Proceeding will delete current measurement data!") -> None:
+    def __init__(self, parent=None, title="", text="Proceeding will delete unsaved data!") -> None:
         super().__init__(parent)
         self.title(title)
-        self.geometry("500x200")
+        self.geometry("500x150")
         self.resizable(False, False)
+        self.configure(fg_color=styling_options.color_scheme['face_color'])
+        self.wm_attributes("-type", "dialog")
+    
+        self.attributes("-topmost", True)
+        self.focus_force()
+        self.transient(parent)
 
-        self.label = ctk.CTkLabel(self, text=text, font=('Ubuntu Mono', 18))
-        self.label.pack(pady=20)
+        self.result = False
 
-        self.button_frame = ctk.CTkFrame(self)
+        self.label = ctk.CTkLabel(
+                        self, 
+                        text=text, 
+                        font=('Ubuntu Mono', 18),
+                        text_color=styling_options.color_scheme['text_color'],
+                    )
+        self.label.pack(pady=(20,0))
+
+        self.button_frame = ctk.CTkFrame(
+                                self,
+                                fg_color="transparent",
+                            )
         self.button_frame.pack(pady=10, fill='both', expand=True)
 
-        self.ok_button = ctk.CTkButton(self.button_frame, text="OK", command=self.on_ok)
+        self.ok_button = ctk.CTkButton(
+                            self.button_frame, 
+                            text="OK", 
+                            command=self.on_ok,
+                            width=210,
+                            height=50, 
+                            font=('Ubuntu Mono', 20), 
+                            text_color=styling_options.color_scheme['text_color'], 
+                            fg_color=styling_options.color_scheme['bg_color'], 
+                            bg_color=styling_options.color_scheme['face_color'],
+                            border_width=0,
+                            hover_color=styling_options.color_scheme['hover_color'],
+                        )
         self.ok_button.pack(side="left", padx=20, pady=10)
 
-        self.cancel_button = ctk.CTkButton(self.button_frame, text="Cancel", command=self.on_cancel)
+        self.cancel_button = ctk.CTkButton(
+                            self.button_frame, 
+                            text="CANCEL", 
+                            command=self.on_cancel,
+                            width=210,
+                            height=50, 
+                            font=('Ubuntu Mono', 20), 
+                            text_color=styling_options.color_scheme['text_color'], 
+                            fg_color=styling_options.color_scheme['bg_color'], 
+                            bg_color=styling_options.color_scheme['face_color'],
+                            border_width=0,
+                            hover_color=styling_options.color_scheme['hover_color'],
+                        )
         self.cancel_button.pack(side="right", padx=20, pady=10)
 
     def on_ok(self):
@@ -1058,9 +1132,97 @@ class ProceedDialog(ctk.CTkToplevel):
         self.destroy()
 
     def show(self):
+        self.update_idletasks() 
         self.grab_set()
         self.wait_window()
         return self.result
 
 class SaveDialog(ctk.CTkToplevel):
-    pass
+    """Creates a popup to ask user if they want to save data.
+    """
+    def __init__(self, parent=None, title="", text="Save data?") -> None:
+        super().__init__(parent)
+        self.title(title)
+        self.geometry("500x250")
+        self.resizable(False, False)
+        self.configure(fg_color=styling_options.color_scheme['face_color'])
+        self.wm_attributes("-type", "dialog")
+        self.attributes("-topmost", True)
+        self.focus_force()
+        self.transient(parent)
+        
+        self.result = False
+        
+        self.label = ctk.CTkLabel(
+                        self, 
+                        text=text, 
+                        font=('Ubuntu Mono', 18),
+                        text_color=styling_options.color_scheme['text_color'],
+                    )
+        self.label.pack(pady=(20,0))
+        
+        self.add_to_filename = ctk.CTkEntry(
+                                self,
+                                height=35, 
+                                font=('Ubuntu Mono', 20), 
+                                text_color=styling_options.color_scheme['text_color'], 
+                                fg_color=styling_options.color_scheme['bg_color'], 
+                                bg_color=styling_options.color_scheme['face_color'],
+                                border_width=0,
+                                justify='center',
+                                corner_radius=0,
+                                placeholder_text='Addition to default name',
+                                state='normal',
+                                )
+        self.add_to_filename.pack(pady=(10,0), fill='x', expand=True)
+
+        self.button_frame = ctk.CTkFrame(
+                                self,
+                                fg_color="transparent",
+                            )
+        self.button_frame.pack(pady=10, fill='both', expand=True)
+
+        self.save_button = ctk.CTkButton(
+                            self.button_frame, 
+                            text="SAVE", 
+                            command=self.on_save,
+                            width=210,
+                            height=50, 
+                            font=('Ubuntu Mono', 20), 
+                            text_color=styling_options.color_scheme['text_color'], 
+                            fg_color=styling_options.color_scheme['bg_color'], 
+                            bg_color=styling_options.color_scheme['face_color'],
+                            border_width=0,
+                            hover_color=styling_options.color_scheme['hover_color'],
+                        )
+        self.save_button.pack(side="left", padx=20, pady=10)
+
+        self.cancel_button = ctk.CTkButton(
+                            self.button_frame, 
+                            text="CANCEL", 
+                            command=self.on_cancel,
+                            width=210,
+                            height=50, 
+                            font=('Ubuntu Mono', 20), 
+                            text_color=styling_options.color_scheme['text_color'], 
+                            fg_color=styling_options.color_scheme['bg_color'], 
+                            bg_color=styling_options.color_scheme['face_color'],
+                            border_width=0,
+                            hover_color=styling_options.color_scheme['hover_color'],
+                        )
+        self.cancel_button.pack(side="right", padx=20, pady=10)
+        
+    def on_save(self):
+        self.result = self.add_to_filename.get()
+        self.destroy()
+    
+    def on_cancel(self):
+        self.result = False
+        self.destroy()
+
+    def show(self):
+        self.update_idletasks() 
+        self.grab_set()
+        self.wait_window()
+        return self.result
+

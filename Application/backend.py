@@ -56,7 +56,7 @@ def get_yamls() -> tuple[list, dict]:
     :return: A tuple containing a list of configuration names and a dictionary of configuration data.
     :rtype: tuple[list, dict]
     """
-    path = r"/home/sublux/SPIKES/Configuration"
+    path = r"/home/sonata/local_git/SPIKES_private/Configuration"
     config_dict = {}
 
     for file_name in os.listdir(path):
@@ -110,6 +110,17 @@ def load_config(config_selection: str) -> tuple[float, str]:
         error_message = sweep_time_tuple[1]
         return sweep_time, mode, error_message
     
+    elif type(sweep_time_tuple) == tuple and len(sweep_time_tuple) == 3:
+        sweep_time = sweep_time_tuple[0]
+        error_message = sweep_time_tuple[1]
+        controls_state_ddnn = {
+            'stop_button_state':  'disabled',
+            'start_button_state': 'disabled',
+            'clear_button_state': 'normal',
+            'select_config_state':  'normal',
+        }
+        return sweep_time, mode, error_message, controls_state_ddnn
+        
     return sweep_time_tuple, mode
 
 def parse_trace(trace_data: str) -> tuple[np.ndarray, dict]:
@@ -300,39 +311,70 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
         AgilentSA.write('INIT:IMM')
         
         i = 0
-        
-        while time.time()-time1 < t_total:
+        if 'trace_type' in config_dict and config_dict['trace_type'] == 'MAXH':
+            while time.time()-time1 < t_total:
+                
+                trace_thread = AgilentSA.trace_threaded_cont(trace_complete, t_refresh=t_refresh, **config_dict)
+                trace_thread.start()    
+                t_start = time.time()
+                while trace_thread.is_alive():
+                    if progress_callback:
+                        t_elaps = time.time() - t_start            
+                        time.sleep(1/60)
+                        progress_callback(t_elaps/t_refresh)
             
-            trace_thread = AgilentSA.trace_threaded_cont(trace_complete, t_refresh=t_refresh, **config_dict)
-            trace_thread.start()    
-            t_start = time.time()
-            while trace_thread.is_alive():
-                if progress_callback:
-                    t_elaps = time.time() - t_start            
+                trace_thread.join()
+                
+                parsed_trace = parse_trace(global_trace)
+                plot_object.update_plot(parsed_trace[0], clear=True, line_num=l)
+
+                plot_object.update_plot(None, clear=True, line_num=l)
+                
+                i += 1
+                
+                if event.is_set():
+                    if controls_callback:
+                        controls_callback(controls_state_dnnn)
+                    l += 1
+                    return    
+                
+                while t_elaps/t_refresh < 1:
+                    t_elaps = time.time() - t_start                
                     time.sleep(1/60)
                     progress_callback(t_elaps/t_refresh)
-        
-            trace_thread.join()
+            l += 1
+        else:
+            for i in range(config_dict['num_aver']):
+                
+                trace_thread = AgilentSA.trace_threaded_cont(trace_complete, t_refresh=t_refresh, **config_dict)
+                trace_thread.start()    
+                t_start = time.time()
+                while trace_thread.is_alive():
+                    if progress_callback:
+                        t_elaps = time.time() - t_start            
+                        time.sleep(1/60)
+                        progress_callback(t_elaps/t_refresh)
             
-            parsed_trace = parse_trace(global_trace)
-            plot_object.update_plot(parsed_trace[0], clear=True, line_num=l)
+                trace_thread.join()
+                
+                parsed_trace = parse_trace(global_trace)
+                plot_object.update_plot(parsed_trace[0], clear=True, line_num=l)
 
-            plot_object.update_plot(None, clear=True, line_num=l)
-            
-            i += 1
-            
-            if event.is_set():
-                if controls_callback:
-                    controls_callback(controls_state_dnnn)
+                plot_object.update_plot(None, clear=True, line_num=l)
+                
+                if event.is_set():
+                    if controls_callback:
+                        controls_callback(controls_state_dnnn)
+                    l += 1
+                    return    
+                
+                while t_elaps/t_refresh < 1:
+                    t_elaps = time.time() - t_start                
+                    time.sleep(1/60)
+                    progress_callback(t_elaps/t_refresh)
+                
                 l += 1
-                return    
-            
-            while t_elaps/t_refresh < 1:
-                t_elaps = time.time() - t_start                
-                time.sleep(1/60)
-                progress_callback(t_elaps/t_refresh)
-        l += 1
-        
+                
     else:
         raise ValueError(f'No valid Mode definition in configuration dictionary.\n\n          {config_dict['mode']}')
         
