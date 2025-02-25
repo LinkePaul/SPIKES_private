@@ -1,12 +1,11 @@
-sweep_points:   1001      # number of points
-start_freq:     300e6     # Hz
-stop_freq:      10e9      # Hz
-res_bw:         1e6       # Hz
-vid_bw:         1e6       # Hz
-attenuation:    10        # dB 
+sweep_points:     1001      # number of points
+start_freq:       300e6     # Hz
+stop_freq:        10e9      # Hz
+res_bw:           1e6       # Hz
+vid_bw:           1e6       # Hz
+attenuation:      10        # dB 
 
-mode:           FAST      # Mode of operation: HIGH-RES or FAST
-refresh_period: 1         # seconds (int or float)
-reset_period:   5         # seconds (integer)
-
-total_time:     60        # seconds (integer)
+mode:             FAST      # Mode of operation: HIGH-RES or FAST
+display_refresh:  1         # seconds (int or float)
+integration_time: 5         # seconds (integer)
+total_traces:     cont      # integer or cont for continuous operation

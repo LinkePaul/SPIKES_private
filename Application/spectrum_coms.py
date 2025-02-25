@@ -185,8 +185,8 @@ class SpectrumControl(GPIBDevice):
             
             self.write('INIT:CONT ON')
 
-            if 'refresh_period' in kwargs:
-                refresh = kwargs.get('refresh_period')
+            if 'display_refresh' in kwargs:
+                refresh = kwargs.get('display_refresh')
             
             elif t_refresh:
                 refresh = t_refresh

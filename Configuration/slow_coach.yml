@@ -6,5 +6,5 @@ vid_bw:         5e4       # Hz
 attenuation:    0         # dB 
 
 mode:           HIGH-RES  # Mode of operation: HIGH-RES or FAST
-num_aver:       10        # number of sweeps
-#trace_type:     MAXH      # optional for max holding over number of sweeps (this will only yield one trace)
+num_aver:       10        # number of traces
+#trace_type:     MAXH      # optional for max holding over number of traces (this will only yield one trace)

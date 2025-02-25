@@ -1,9 +1,11 @@
 """Utility functions for the SPIKES application.
 """
+from math import inf
 import time
 import os
 import yaml
 import threading
+import math
 import numpy as np
 from typing import Callable, TYPE_CHECKING
 
@@ -257,23 +259,30 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
         
     if 'mode' in config_dict and config_dict['mode'] == 'FAST':
         try:
-            reset = int(float(config_dict['reset_period']))
-            total = int(float(config_dict['total_time']))
-            refresh = int(float(config_dict['refresh_period']))
+            int_time = int(float(config_dict['integration_time']))
+            try:
+                total = int(float(config_dict['total_traces']))
+            except:
+                total = config_dict['total_traces']
+                if total == 'cont':
+                    total = int(1e15)
+                else:
+                    raise Exception("total_traces must be int or 'cont'.\n")
+    
+            refresh = int(float(config_dict['display_refresh']))
             
         except KeyError:
-            raise KeyError(f'refresh_period, reset_period and total_time must be defined in the configuration dictionary for time-based mode.')
+            raise KeyError(f'display_refresh, integration_time and total_traces must be defined in the configuration dictionary for time-based (FAST) mode.')
         except Exception as e:
-            raise Exception(f'refresh_period, reset_period and total_time must be defined in the configuration dictionary for time-based mode.\n\n          {e}')
+            raise e
         
         time1 = time.time()
-        int_mult = int(total/reset)
         
-        for i in range(int_mult):      
+        for i in range(total):      
             
             AgilentSA.write('INIT:IMM')
             t_start = time.time()
-            while time.time()-time1 < (i+1)*reset:
+            while time.time()-time1 < (i+1)*int_time:
                 
                 trace_thread = AgilentSA.trace_threaded_cont(trace_complete, **config_dict)
                 trace_thread.start()    
@@ -281,7 +290,7 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
                 while trace_thread.is_alive():
                     t_elaps = time.time() - t_start                  
                     time.sleep(1/60)
-                    progress_callback(t_elaps/reset)
+                    progress_callback(t_elaps/int_time)
                 
                 trace_thread.join()
                 
@@ -296,17 +305,16 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
                     l += 1
                     return 
                 
-            while t_elaps/reset < 1:
+            while t_elaps/int_time < 1:
                 t_elaps = time.time() - t_start                 
                 time.sleep(1/60)
-                progress_callback(t_elaps/reset)
+                progress_callback(t_elaps/int_time)
             l += 1
     
     elif 'mode' in config_dict and config_dict['mode'] == 'HIGH-RES':
         time1 = time.time()
         t_refresh = sweep_time + 2 + 0.01*sweep_time
         t_total = t_refresh * config_dict['num_aver']
-        int_mult = int(t_total/t_refresh)
                     
         AgilentSA.write('INIT:IMM')
         

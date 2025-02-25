@@ -442,7 +442,7 @@ class Configurations(ctk.CTkTabview):
         
         self.mode_label = ctk.CTkLabel(
                                 parent,
-                                text="Mode of Operation       ",
+                                text="Mode of Operation         ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -454,7 +454,7 @@ class Configurations(ctk.CTkTabview):
         
         self.start_freq_label_hires = ctk.CTkLabel(
                                 self.hires,
-                                text="Start Frequency         ",
+                                text="Start Frequency           ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20),
@@ -482,7 +482,7 @@ class Configurations(ctk.CTkTabview):
         
         self.stop_freq_label_hires = ctk.CTkLabel(
                                 self.hires,
-                                text="Stop Frequency          ",
+                                text="Stop Frequency            ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -510,7 +510,7 @@ class Configurations(ctk.CTkTabview):
         
         self.res_bw_label_hires = ctk.CTkLabel(
                                 self.hires,
-                                text="Resolution BW           ",
+                                text="Resolution BW             ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -538,7 +538,7 @@ class Configurations(ctk.CTkTabview):
 
         self.vid_bw_label_hires = ctk.CTkLabel(
                                 self.hires,
-                                text="Video Bandwidth         ",
+                                text="Video Bandwidth           ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -566,7 +566,7 @@ class Configurations(ctk.CTkTabview):
         
         self.atten_label_hires = ctk.CTkLabel(
                                 self.hires,
-                                text="Attenuation             ",
+                                text="Attenuation               ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -592,9 +592,9 @@ class Configurations(ctk.CTkTabview):
                                 )
         self.atten_hires.pack(side="top", pady=(0,5), anchor='n')
         
-        self.sweeps_label = ctk.CTkLabel(
+        self.traces_label = ctk.CTkLabel(
                                 self.hires,
-                                text="Number of Sweeps        ",
+                                text="Number of Traces          ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -603,9 +603,9 @@ class Configurations(ctk.CTkTabview):
                                 bg_color=styling_options.color_scheme['face_color'],
                                 justify='left',
                                 )  
-        self.sweeps_label.pack(side="top", pady=(15,0), anchor='n')
+        self.traces_label.pack(side="top", pady=(15,0), anchor='n')
 
-        self.sweeps = ctk.CTkEntry(
+        self.traces = ctk.CTkEntry(
                                 self.hires, 
                                 width=self.widget_width, 
                                 height=self.widget_height*0.5, 
@@ -618,12 +618,12 @@ class Configurations(ctk.CTkTabview):
                                 corner_radius=0,
                                 state='readonly',
                                 )
-        self.sweeps.pack(side="top", pady=(0,5), anchor='n')
+        self.traces.pack(side="top", pady=(0,5), anchor='n')
         
         
         self.start_freq_label_fast = ctk.CTkLabel(
                                 self.fast,
-                                text="Start Frequency         ",
+                                text="Start Frequency           ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -651,7 +651,7 @@ class Configurations(ctk.CTkTabview):
         
         self.stop_freq_label_fast = ctk.CTkLabel(
                                 self.fast,
-                                text="Stop Frequency          ",
+                                text="Stop Frequency            ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -679,7 +679,7 @@ class Configurations(ctk.CTkTabview):
         
         self.res_bw_label_fast = ctk.CTkLabel(
                                 self.fast,
-                                text="Resolution BW           ",
+                                text="Resolution BW             ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -707,7 +707,7 @@ class Configurations(ctk.CTkTabview):
 
         self.vid_bw_label_fast = ctk.CTkLabel(
                                 self.fast,
-                                text="Video Bandwidth         ",
+                                text="Video Bandwidth           ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -735,7 +735,7 @@ class Configurations(ctk.CTkTabview):
         
         self.atten_label_fast = ctk.CTkLabel(
                                 self.fast,
-                                text="Attenuation             ",
+                                text="Attenuation               ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -763,7 +763,7 @@ class Configurations(ctk.CTkTabview):
         
         self.refresh_label = ctk.CTkLabel(
                                 self.fast,
-                                text="Refresh Period          ",
+                                text="Display Refresh           ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -789,9 +789,9 @@ class Configurations(ctk.CTkTabview):
                                 )
         self.refresh.pack(side="top", pady=(0,5), anchor='n')
 
-        self.reset_label = ctk.CTkLabel(
+        self.integration_label = ctk.CTkLabel(
                                 self.fast,
-                                text="Reset Period            ",
+                                text="Integration Time per Trace",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -800,9 +800,9 @@ class Configurations(ctk.CTkTabview):
                                 bg_color=styling_options.color_scheme['face_color'],
                                 justify='center',
                                 )  
-        self.reset_label.pack(side="top", pady=(5,0), anchor='n')
+        self.integration_label.pack(side="top", pady=(5,0), anchor='n')
         
-        self.reset = ctk.CTkEntry(
+        self.integration = ctk.CTkEntry(
                                 self.fast, 
                                 width=self.widget_width, 
                                 height=self.widget_height*0.5, 
@@ -815,11 +815,11 @@ class Configurations(ctk.CTkTabview):
                                 corner_radius=0,
                                 state='readonly',
                                 )
-        self.reset.pack(side="top", pady=(0,5), anchor='n')
+        self.integration.pack(side="top", pady=(0,5), anchor='n')
 
-        self.total_t_label = ctk.CTkLabel(
+        self.total_traces_label = ctk.CTkLabel(
                                 self.fast,
-                                text="Total Time              ",
+                                text="Number of Traces          ",
                                 width=self.widget_width,
                                 height=self.widget_height*0.5,
                                 font=('Ubuntu Mono', 20), 
@@ -828,9 +828,9 @@ class Configurations(ctk.CTkTabview):
                                 bg_color=styling_options.color_scheme['face_color'],
                                 justify='center',
                                 )  
-        self.total_t_label.pack(side="top", pady=(5,0), anchor='n')
+        self.total_traces_label.pack(side="top", pady=(5,0), anchor='n')
         
-        self.total_t = ctk.CTkEntry(
+        self.total_traces = ctk.CTkEntry(
                                 self.fast, 
                                 width=self.widget_width, 
                                 height=self.widget_height*0.5, 
@@ -843,7 +843,7 @@ class Configurations(ctk.CTkTabview):
                                 corner_radius=0,
                                 state='readonly',
                                 )
-        self.total_t.pack(side="top", pady=(0,5), anchor='n')
+        self.total_traces.pack(side="top", pady=(0,5), anchor='n')
             
     def write_configuration(self, config_dict: dict) -> None:
         """Updates the configuration to the display elements.
@@ -872,7 +872,7 @@ class Configurations(ctk.CTkTabview):
                 self.atten_hires.configure(textvariable=ctk.StringVar(value=f'{config_dict['attenuation']} dB'))
             
             if 'num_aver' in config_dict:
-                self.sweeps.configure(textvariable=ctk.StringVar(value=config_dict['num_aver']))
+                self.traces.configure(textvariable=ctk.StringVar(value=config_dict['num_aver']))
                  
         elif config_dict['mode'] == 'FAST':
             self.set("   FAST   ")
@@ -892,14 +892,17 @@ class Configurations(ctk.CTkTabview):
             if 'attenuation' in config_dict:
                 self.atten_fast.configure(textvariable=ctk.StringVar(value=f'{config_dict['attenuation']} dB'))
             
-            if 'refresh_period' in config_dict:
-                self.refresh.configure(textvariable=ctk.StringVar(value=f'{config_dict['refresh_period']} sec'))
+            if 'display_refresh' in config_dict:
+                self.refresh.configure(textvariable=ctk.StringVar(value=f'{config_dict['display_refresh']} sec'))
             
-            if 'reset_period' in config_dict:
-                self.reset.configure(textvariable=ctk.StringVar(value=backend.value_parser(config_dict['reset_period'], 'sec')))
+            if 'integration_time' in config_dict:
+                self.integration.configure(textvariable=ctk.StringVar(value=backend.value_parser(config_dict['integration_time'], 'sec')))
             
-            if 'total_time' in config_dict:
-                self.total_t.configure(textvariable=ctk.StringVar(value=backend.value_parser(config_dict['total_time'], 'sec')))
+            if 'total_traces' in config_dict:
+                if config_dict['total_traces'] == 'cont':
+                    self.total_traces.configure(textvariable=ctk.StringVar(value='Continuous'))
+                else:
+                    self.total_traces.configure(textvariable=ctk.StringVar(value=f'{config_dict['total_traces']}'))
             
 class Plot(ctk.CTkFrame):
     """Containing the Matplotlib figure.
