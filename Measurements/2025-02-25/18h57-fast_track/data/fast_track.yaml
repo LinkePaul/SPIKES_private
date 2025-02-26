@@ -1,0 +1,10 @@
+attenuation: 10
+display_refresh: 1
+integration_time: 5
+mode: FAST
+res_bw: 1e6
+start_freq: 300e6
+stop_freq: 10e9
+sweep_points: 1001
+total_traces: cont
+vid_bw: 1e6

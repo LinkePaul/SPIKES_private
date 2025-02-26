@@ -5,9 +5,15 @@ import time
 import os
 import yaml
 import threading
-import math
 import numpy as np
+from datetime import datetime
 from typing import Callable, TYPE_CHECKING
+
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
+import matplotlib.colors as mcolors
 
 import spectrum_coms
 
@@ -449,3 +455,159 @@ def value_parser(num: str, unit: str='Hz') -> str:
     printable_num = f'{num} {prefix}{unit}'
 
     return printable_num
+
+def make_dir_daily(path: str = r"/home/sonata/local_git/SPIKES_private/Measurements") -> str:
+    """Creates a daily directory for saving all measurement data of that date if it does not already exist.
+
+    :return: daily directory in which to save the measurements.
+    :rtype: str
+    
+    :return: date and time object.
+    :rtype: datetime
+    """
+    date_time = datetime.now()
+
+    date = date_time.strftime("%Y-%m-%d")
+    
+    daily_dir = path + "/" + date
+    
+    if not os.path.exists(daily_dir):
+        os.makedirs(daily_dir)
+
+    return daily_dir, date_time
+    
+def make_dir_measurement(config: str) -> None:
+    """Creates a timestamped directory for saving the current measurement.
+    
+    :return: None
+    """
+    daily_dir, date_time = make_dir_daily()
+
+    time = date_time.strftime("%Hh%M")
+    
+    measurement_dir = daily_dir + "/" + time + "-" + config
+    
+    if not os.path.exists(measurement_dir):
+        os.makedirs(measurement_dir)
+        return measurement_dir
+    
+    else:
+        i = 0
+        while True:
+            i+=1
+            if not os.path.exists(measurement_dir + f"_{i}"):
+                os.makedirs(measurement_dir + f"_{i}")
+                return measurement_dir + f"_{i}"
+                
+def save_config(path: str, config_dict: dict, config_name: str) -> None:
+    """Saves the configuration dictionary to a YAML file.
+
+    :param config_dict: Configuration dictionary to be saved.
+    :type config_dict: dict
+    
+    :return: None
+    """
+    path = os.path.join(path, "data")
+    
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    file_path = os.path.join(path, f'{config_name}.yaml')
+    
+    with open(file_path, 'w') as file:
+        yaml.dump(config_dict, file, default_flow_style=False)
+        
+def save_traces(path: str, trace_data: list) -> None:
+    """Saves the trace data to a CSV file.
+
+    :path: Path to the directory in which to save the trace data.
+    :type path: str
+
+    :param trace_data: List of trace data (Matplotlib.Line2D) to be saved.
+    :type 
+    
+    :return: None
+    """
+    path = os.path.join(path, "data")
+    
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    for i, trace in enumerate(trace_data):
+        file_path = os.path.join(path, f'trace_{i+1}.csv')
+        np.savetxt(file_path, np.array([trace.get_xdata()*1e6, trace.get_ydata()]).T, delimiter=',')
+
+def invert_color(color):
+    if isinstance(color, str):
+        color = mcolors.hex2color(color)
+    inverted_color = tuple(1.0 - c for c in color)
+    return inverted_color
+
+def save_png(path, lines, legend=False):
+    
+    x_label = 'MHz'
+    y_label = 'dBm'
+    
+    path = os.path.join(path, "imgs_nolegend")
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    fig = Figure(figsize=(10, 5), dpi=300, constrained_layout=True)
+    ax = fig.add_subplot()
+    
+    ax.grid(True, which='both', linestyle='--', linewidth=0.3, alpha=0.6)
+    
+    for line in lines:
+        # Invert the color of the line
+        inverted_color = invert_color(line.get_color())
+        new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=inverted_color, linewidth=line.get_linewidth())
+        ax.add_line(new_line)
+    ax.autoscale()
+    y_lim = ax.get_ylim()
+    x_lim = ax.get_xlim()
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    
+    # Save the combined plot
+    fig.savefig(os.path.join(path, "combined_trace.png"))
+    plt.close(fig)
+    
+    for i, line in enumerate(lines):
+        fig = Figure(figsize=(10, 5), dpi=300, constrained_layout=True)
+        ax = fig.add_subplot()
+        ax.grid(True, which='both', linestyle='--', linewidth=0.3, alpha=0.6)
+        new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=invert_color(line.get_color()), linewidth=line.get_linewidth()+1)
+        ax.add_line(new_line)
+        ax.set_ylim(y_lim[0], y_lim[1])
+        ax.set_xlim(x_lim[0], x_lim[1])
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        fig.savefig(os.path.join(path, f"trace_{i+1}.png"))
+        plt.close(fig)
+        
+if __name__ == "__main__":
+    
+    config_dict = {
+        "start_freq": 1e6,
+        "stop_freq": 1e9,
+        "mode": "FAST",
+    }
+    
+    config_name = "hoola_hoop"
+    
+    line_1 = Line2D(np.random.rand(2, 10)[0], np.random.rand(2, 10)[1], linewidth=0.2, color='yellow')
+    line_2 = Line2D(np.random.rand(2, 10)[0], np.random.rand(2, 10)[1], linewidth=0.2, color='white')
+    line_3 = Line2D(np.random.rand(2, 10)[0], np.random.rand(2, 10)[1], linewidth=0.2, color='green')
+    
+    lines = [line_1, line_2, line_3]
+    print(lines)
+    path = make_dir_measurement(config_name)
+    
+    save_config(path, config_dict, config_name)
+    
+    save_traces(path, lines)
+    
+    save_png(path, lines)
+    
+    #save_png_legend(path, trace_data)
+    

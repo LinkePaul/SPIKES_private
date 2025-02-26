@@ -3,6 +3,8 @@
 import customtkinter as ctk
 import threading
 
+from matplotlib.pyplot import plot
+
 import backend
 import plotting
 
@@ -13,6 +15,8 @@ coms_object = None
 progress_object = None
 config_lst = None
 config_dicts = None
+selected_dict_name = None
+selected_dict = None
 old_choice = "RELOAD"
 
 class Controls(ctk.CTkFrame):
@@ -182,6 +186,9 @@ class Controls(ctk.CTkFrame):
         global config_lst
         global config_dicts
         global old_choice
+        global selected_dict_name
+        global selected_dict
+        
         hint = None
         
         if self.proceed_dialog() == False:
@@ -296,6 +303,10 @@ class Controls(ctk.CTkFrame):
         else:
             text = (f"Time per Sweep: {round(self.sweep_time, 3)} s \n\n\n\n\n\n\n\n\n")
         Coms.update_coms(coms_object, text)
+        
+        selected_dict_name = self.config_sel
+        selected_dict = config_dicts[self.config_sel]
+        
         self.clear_plot()
 
     def click_start(self) -> None:
@@ -1217,8 +1228,19 @@ class SaveDialog(ctk.CTkToplevel):
         
     def on_save(self):
         self.result = self.add_to_filename.get()
-        self.destroy()
+        lines = plot_object.lines
+        path = backend.make_dir_measurement(selected_dict_name)
+        
+        backend.save_config(path, selected_dict, selected_dict_name)
     
+        backend.save_traces(path, lines)
+    
+        backend.save_png(path, lines)
+        
+        #backend.save_png(path, lines, selected_dict)
+        
+        self.destroy()
+        
     def on_cancel(self):
         self.result = False
         self.destroy()
