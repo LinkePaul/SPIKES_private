@@ -36,7 +36,7 @@ def set_progress_callback(callback: Callable[[float], None]) -> None:
     global progress_callback
     progress_callback = callback
 
-def set_controls_callback(callback: Callable[[dict], None]) -> None:
+def set_controls_callback(callback: Callable[[str], None]) -> None:
     """Sets the callback function for activating/deactivating indiviadual controls.
 
     :param callback: The callback function to be called with a dictionary.
@@ -237,20 +237,7 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
     global l
     global progress_callback
     
-    controls_state_nddd = {
-        'stop_button_state':  'normal',
-        'start_button_state': 'disabled',
-        'clear_button_state': 'disabled',
-        'select_config_state':  'disabled',
-    }
-    controls_state_dnnn = {
-        'stop_button_state': 'disabled',
-        'start_button_state': 'normal',
-        'clear_button_state': 'normal',
-        'select_config_state': 'normal',
-        }   
-    
-    controls_callback(controls_state_nddd)
+    controls_callback('ndddd')
     
     config_dict = config_dicts[config_selection]
     
@@ -258,7 +245,7 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
         AgilentSA = spectrum_coms.SpectrumControl()
     
     except Exception as e:
-        controls_callback(controls_state_dnnn)
+        controls_callback('dnnnd')
         raise e
     
     AgilentSA.send_config(**config_dict)
@@ -307,7 +294,7 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
                 
                 if event.is_set():
                     if controls_callback:
-                        controls_callback(controls_state_dnnn)
+                        controls_callback('dnnnn')
                     l += 1
                     return 
                 
@@ -348,7 +335,7 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
                 
                 if event.is_set():
                     if controls_callback:
-                        controls_callback(controls_state_dnnn)
+                        controls_callback('dnnnn')
                     l += 1
                     return    
                 
@@ -378,7 +365,7 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
                 
                 if event.is_set():
                     if controls_callback:
-                        controls_callback(controls_state_dnnn)
+                        controls_callback('dnnnn')
                     l += 1
                     return    
                 
@@ -393,7 +380,7 @@ def start_measurement(config_selection: str, config_dicts: dict, plot_object: 'G
         raise ValueError(f'No valid Mode definition in configuration dictionary.\n\n          {config_dict['mode']}')
         
     event.set()
-    controls_callback(controls_state_dnnn)
+    controls_callback('dnnnn')
     
 def value_parser(num: str, unit: str='Hz') -> str:
     """Parses a numerical value and its unit into a human-readable format for display in the configuration section.

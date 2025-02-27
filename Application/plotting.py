@@ -21,7 +21,7 @@ class Graph:
         
         :return: None
         """
-        self.parent = parent 
+        self.parent = parent
         self.trace_num = 0
         self.fig, self.ax, self.canvas = self.create_plot()
         self.lines = []
@@ -139,7 +139,7 @@ class Graph:
         self.canvas.draw()
         
     def clear_plot(self) -> None:
-        """Clears the matplotlib figure and draws a blank instance.
+        """Clears the matplotlib figure and draws a blank canvas.
         """
         for line_n in range(len(self.lines)):
             self.lines[line_n].set_data([], [])

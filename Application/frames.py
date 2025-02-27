@@ -3,8 +3,6 @@
 import customtkinter as ctk
 import threading
 
-from matplotlib.pyplot import plot
-
 import backend
 import plotting
 
@@ -36,13 +34,6 @@ class Controls(ctk.CTkFrame):
 
         global config_lst
         global config_dicts
-        
-        self.init_controls_state = {
-            'stop_button_state':  'disabled',
-            'start_button_state': 'disabled',
-            'clear_button_state': 'disabled',
-            'select_config_state':  'normal',
-            }
                 
         self.frame_width   = 340
         self.widget_width  = self.frame_width - 40
@@ -141,7 +132,7 @@ class Controls(ctk.CTkFrame):
         self.select_config.set("Select Mode")
         self.select_config.bind("<Key>", lambda e: "break")
         
-        self.set_controls(self.init_controls_state)
+        self.set_controls('dddnd')
         
         backend.set_controls_callback(self.set_controls)
         
@@ -158,18 +149,28 @@ class Controls(ctk.CTkFrame):
         self.configurations.pack(side='top', fill='both', expand=True)
         self.configurations.pack_forget()        
     
-    def set_controls(self, callback_dict: dict) -> None:
-        """Sets the state of the controls based on the callback dictionary.
-
+    def set_controls(self, state: str) -> None:
+        """Sets the state of the controls based on the state input parameter.
+        
+        Format: 'n' or 'd' for each control. Index corresponds to the control in the list below.
+        
+        Example: set_controls('dndnd') will disable the stop button, enable the start button, disable the clear button, enable the select_config button and disable the save button.
+        
         :param callback_dict: Containing the state of the controls.
         :type callback_dict: dict
         
         :return: None
         """
+        states = ['normal', 'disabled']
+        keys = ['stop_button_state', 'start_button_state', 'clear_button_state', 'select_config_state', 'save_button_state']
+    
+        callback_dict = {key: states[int(state[i] == 'd')] for i, key in enumerate(keys)}
+        
         self.stop_button.configure(state=callback_dict['stop_button_state'])
         self.start_button.configure(state=callback_dict['start_button_state'])
         self.clear_plot_button.configure(state=callback_dict['clear_button_state'])
         self.select_config.configure(state=callback_dict['select_config_state'])
+        self.save_button.configure(state=callback_dict['save_button_state'])
         
     def load_configuration(self, choice: str) -> None:
         """Calls backend.load_config() to load the selected configuration to the spectrum analyzer. 
@@ -209,13 +210,7 @@ class Controls(ctk.CTkFrame):
                 self.select_config.set('Select Mode')
                 return
         
-        controls_state_ddnd = {
-            'stop_button_state':  'disabled',
-            'start_button_state': 'disabled',
-            'clear_button_state': 'normal',
-            'select_config_state':  'disabled',
-        }
-        self.set_controls(controls_state_ddnd)    
+        self.set_controls('ddndd')    
         
         try:
             sweep_time, self.mode = backend.load_config(self.config_sel)
@@ -258,11 +253,11 @@ class Controls(ctk.CTkFrame):
                 '',
             ])
             Coms.update_coms(coms_object, text)
-            self.set_controls(self.init_controls_state)
+            self.set_controls('dddnd')
             return
         except Exception as e:
             Coms.update_coms(coms_object, f'{e} \n\n\n\n\n\n\n\n')
-            self.set_controls(self.init_controls_state)
+            self.set_controls('dddnd')
             return
         
         old_choice = self.config_sel
@@ -270,13 +265,7 @@ class Controls(ctk.CTkFrame):
         self.configurations.pack(side='top', fill='both', expand=True)
         self.configurations.write_configuration(config_dicts[self.config_sel])
         
-        controls_state_dnnn = {
-            'stop_button_state':  'disabled',
-            'start_button_state': 'normal',
-            'clear_button_state': 'normal',
-            'select_config_state':  'normal',
-        }
-        self.set_controls(controls_state_dnnn)
+        self.set_controls('dnnnd')
         if hint:
             if len(hint) == 1:
                 text = "\n".join([
@@ -327,7 +316,7 @@ class Controls(ctk.CTkFrame):
                 backend.start_measurement(self.config_sel, config_dicts, plot_object, sweep_time, self.event)
             except Exception as e:
                 self.thread_exception = e
-                self.set_controls(self.init_controls_state)
+                self.set_controls('dddnd')
                 self.event.set()
         t1 = threading.Thread(target=worker, daemon=True)
         t1.start()
@@ -354,26 +343,24 @@ class Controls(ctk.CTkFrame):
                 '',
                 ])
             Coms.update_coms(coms_object, text)
-            self.set_controls(self.init_controls_state)
+            self.set_controls('dddnd')
             self.thread_exception = None
 
         else:
             self.after(100, self.check_thread_exception)
     
     def click_stop(self) -> None:
-        """Set a stopping event to stop the measurement thread AFTER completing current trace.
+        """Set an event to stop the measurement thread AFTER completing current trace.
         """
         self.event.set()
-        self.no_controls_state = {
-            'stop_button_state': 'disabled',
-            'start_button_state': 'disabled',
-            'clear_button_state': 'disabled',
-            'select_config_state': 'disabled',
-        }
-        self.set_controls(self.no_controls_state)
+        self.set_controls('ddddd')
         
     def proceed_dialog(self) -> bool:
-        
+        """Shows a dialog to confirm the user's intention to proceed with the current action.
+
+        :return: True if the user confirms the action, False otherwise.
+        :rtype: bool
+        """
         if plot_object.lines != []:
             proc_obj = ProceedDialog()
             proceed = proc_obj.show()
@@ -383,6 +370,8 @@ class Controls(ctk.CTkFrame):
                 return proceed
         
     def click_clear_plot(self) -> None:
+        """Checks if there is unsaved data and if yes calls clear_plot(), if no calls clear_plot() if the user confirms the action.
+        """
         if is_saved == True:
             self.clear_plot()
             return
@@ -390,6 +379,7 @@ class Controls(ctk.CTkFrame):
         proceed = self.proceed_dialog()
         if proceed == False:
             return    
+        
         self.clear_plot()
 
     def clear_plot(self) -> None:
@@ -400,7 +390,7 @@ class Controls(ctk.CTkFrame):
         progress_object.update_progress(0)
 
     def click_save(self) -> None:
-        """Not implemented yet.
+        """Checks if there is any data to save and if yes opens the SaveDialog().
         """
         if plot_object.lines != []:
             save_obj = SaveDialog()
@@ -1086,7 +1076,9 @@ class Coms(ctk.CTkFrame):
 class ProceedDialog(ctk.CTkToplevel):
     """Creates a popup to ask user if they want to proceed.
     """
-    def __init__(self, parent=None, title="", text="Proceeding will delete unsaved data!") -> None:
+    def __init__(self, parent: ctk.CTkToplevel=None, title: str="", text: str="Proceeding will delete unsaved data!") -> None:
+        """Initializes the ProceedDialog class.
+        """
         super().__init__(parent)
         self.title(title)
         self.geometry("500x150")
@@ -1144,15 +1136,24 @@ class ProceedDialog(ctk.CTkToplevel):
                         )
         self.cancel_button.pack(side="right", padx=20, pady=10)
 
-    def on_ok(self):
+    def on_ok(self) -> None:
+        """Sets the result to True and closes the dialog.
+        """
         self.result = True
         self.destroy()
 
-    def on_cancel(self):
+    def on_cancel(self) -> None:
+        """Sets the result to False and closes the dialog.
+        """
         self.result = False
         self.destroy()
 
-    def show(self):
+    def show(self) -> bool:
+        """Shows the dialog and waits for user input.
+
+        :return: Result of the dialog.
+        :rtype: bool
+        """
         self.update_idletasks() 
         self.grab_set()
         self.wait_window()
@@ -1161,7 +1162,9 @@ class ProceedDialog(ctk.CTkToplevel):
 class SaveDialog(ctk.CTkToplevel):
     """Creates a popup to ask user if they want to save data.
     """
-    def __init__(self, parent=None, title="", text="Save data?") -> None:
+    def __init__(self, parent: ctk.CTkToplevel=None, title: str="", text: str="Save data?") -> None:
+        """Initializes the SaveDialog class.
+        """
         super().__init__(parent)
         self.title(title)
         self.geometry("500x250")
@@ -1233,7 +1236,9 @@ class SaveDialog(ctk.CTkToplevel):
                         )
         self.cancel_button.pack(side="right", padx=20, pady=10)
         
-    def on_save(self):
+    def on_save(self) -> None:
+        """Saves the data and closes the dialog, sets global is_saved to True.
+        """
         global is_saved
         
         self.result = self.input_name.get()
@@ -1256,11 +1261,18 @@ class SaveDialog(ctk.CTkToplevel):
         
         self.destroy()
         
-    def on_cancel(self):
+    def on_cancel(self) -> None:
+        """Closes the dialog and sets the result to False.
+        """
         self.result = False
         self.destroy()
 
-    def show(self):
+    def show(self) -> bool:
+        """Shows the dialog and waits for user input.
+
+        :return: Result of the dialog.
+        :rtype: bool
+        """
         self.update_idletasks() 
         self.grab_set()
         self.wait_window()

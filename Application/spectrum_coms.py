@@ -8,7 +8,7 @@ from gpib_coms import GPIBDevice
 
 class SpectrumControl(GPIBDevice):
     def __init__(self) -> None:
-        """Initializes the connection to the Spectrum Analyzer and sets standard values for configuration parameters.
+        """Initializes the connection to the Spectrum Analyzer and sets a dictionary of standard values for configuration parameters.
         
         :raises: socket_error if the connection fails.
         :raises: Exception if any other error occurs.
@@ -169,8 +169,9 @@ class SpectrumControl(GPIBDevice):
         return float(sweep_time)
     
     def trace_threaded_cont(self, callback, t_refresh: float=None, **kwargs: dict) -> threading.Thread:
-        """This method is used to create a thread that continuously fetches trace data from the Spectrum Analyzer and sends it to the callback function.
-
+        """Creates a thread that fetches trace data from the Spectrum Analyzer and sends it to the callback function.
+        Can be used for continuous data acquisition.
+        
         :param callback: Callback function to be called with the trace data.
         :type callback: function
         
@@ -214,7 +215,7 @@ class SpectrumControl(GPIBDevice):
 
 if __name__ == '__main__':
     """This is a test script for the SpectrumControl class. 
-    It will print the ID of the Spectrum Analyzer and a truncated a single trace for an insight how the raw data looks like.
+    It will print the ID of the Spectrum Analyzer and a truncated single trace for an insight on how the raw data looks like.
     """
     SA = SpectrumControl()
     print(SA.query('*IDN?'))

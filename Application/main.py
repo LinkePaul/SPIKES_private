@@ -5,9 +5,7 @@ This file contains the main CustomTkinter application class and the main loop.
 Further details about the application can be found in the Github repository.
 """
 import customtkinter as ctk
-
 import frames
-
 import styling_options
 
 class App(ctk.CTk):
@@ -71,7 +69,7 @@ class App(ctk.CTk):
         self.initial_height = self.winfo_height()
     
     def on_close(self) -> None:
-        """Show confirmation dialog before closing
+        """Show confirmation dialog before closing, if there are unsaved changes or ongoing operations.
         """
         if frames.plot_object.lines == [] and frames.progress_object.progress_bar.get() == 0:
             self.destroy()
