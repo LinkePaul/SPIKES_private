@@ -13,10 +13,12 @@ import styling_options
 plot_object = None
 coms_object = None
 progress_object = None
+sweep_time = None
 config_lst = None
 config_dicts = None
 selected_dict_name = None
 selected_dict = None
+is_saved = True
 old_choice = "RELOAD"
 
 class Controls(ctk.CTkFrame):
@@ -45,8 +47,6 @@ class Controls(ctk.CTkFrame):
         self.frame_width   = 340
         self.widget_width  = self.frame_width - 40
         self.widget_height = 50
-        
-        self.sweep_time = 0
         
         config_lst, config_dicts = backend.get_yamls()
         
@@ -188,6 +188,7 @@ class Controls(ctk.CTkFrame):
         global old_choice
         global selected_dict_name
         global selected_dict
+        global sweep_time
         
         hint = None
         
@@ -217,16 +218,16 @@ class Controls(ctk.CTkFrame):
         self.set_controls(controls_state_ddnd)    
         
         try:
-            self.sweep_time, self.mode = backend.load_config(self.config_sel)
+            sweep_time, self.mode = backend.load_config(self.config_sel)
             
         except ValueError:
             try:
-                self.sweep_time, self.mode, hint = backend.load_config(self.config_sel)
+                sweep_time, self.mode, hint = backend.load_config(self.config_sel)
             except ValueError:
-                self.sweep_time, self.mode, hint, controls = backend.load_config(self.config_sel)
+                sweep_time, self.mode, hint, controls = backend.load_config(self.config_sel)
                 self.set_controls(controls)
                 text = "\n".join([
-                            f'Time per Sweep: {round(self.sweep_time, 3)} s ',
+                            f'Time per Sweep: {round(sweep_time, 3)} s ',
                             '',
                             f'   Hint: {hint}',
                             '',
@@ -279,7 +280,7 @@ class Controls(ctk.CTkFrame):
         if hint:
             if len(hint) == 1:
                 text = "\n".join([
-                    f'Time per Sweep: {round(self.sweep_time, 3)} s ',
+                    f'Time per Sweep: {round(sweep_time, 3)} s ',
                     '',
                     f'   Hint: {hint[0]}',
                     '',
@@ -292,7 +293,7 @@ class Controls(ctk.CTkFrame):
 
             elif len(hint) > 1:
                 text = "\n".join([
-                    f'Time per Sweep: {round(self.sweep_time, 3)} s\n',
+                    f'Time per Sweep: {round(sweep_time, 3)} s\n',
                 ])
                 for i in range(len(hint)):
                     text = "\n".join([text,
@@ -301,7 +302,7 @@ class Controls(ctk.CTkFrame):
                     text = "\n".join([text, ''])
 
         else:
-            text = (f"Time per Sweep: {round(self.sweep_time, 3)} s \n\n\n\n\n\n\n\n\n")
+            text = (f"Time per Sweep: {round(sweep_time, 3)} s \n\n\n\n\n\n\n\n\n")
         Coms.update_coms(coms_object, text)
         
         selected_dict_name = self.config_sel
@@ -316,12 +317,14 @@ class Controls(ctk.CTkFrame):
         
         :return: None
         """
+        global is_saved
+        
         self.event = threading.Event()
         self.thread_exception = None
         
         def worker():
             try:
-                backend.start_measurement(self.config_sel, config_dicts, plot_object, self.sweep_time, self.event)
+                backend.start_measurement(self.config_sel, config_dicts, plot_object, sweep_time, self.event)
             except Exception as e:
                 self.thread_exception = e
                 self.set_controls(self.init_controls_state)
@@ -329,8 +332,10 @@ class Controls(ctk.CTkFrame):
         t1 = threading.Thread(target=worker, daemon=True)
         t1.start()
         
+        is_saved = False
+        
         self.after(100, self.check_thread_exception)
-    
+        
     def check_thread_exception(self) -> None:
         """Checks for any exceptions in the worker thread during execution.
         
@@ -378,6 +383,9 @@ class Controls(ctk.CTkFrame):
                 return proceed
         
     def click_clear_plot(self) -> None:
+        if is_saved == True:
+            self.clear_plot()
+            return
         
         proceed = self.proceed_dialog()
         if proceed == False:
@@ -396,8 +404,7 @@ class Controls(ctk.CTkFrame):
         """
         if plot_object.lines != []:
             save_obj = SaveDialog()
-            save = save_obj.show()
-            print(save)
+            save_obj.show()
         
     def resize(self, height: int) -> None:
         """Resizes the control frame to fit new window height (width stays the same).
@@ -1175,7 +1182,7 @@ class SaveDialog(ctk.CTkToplevel):
                     )
         self.label.pack(pady=(20,0))
         
-        self.add_to_filename = ctk.CTkEntry(
+        self.input_name = ctk.CTkEntry(
                                 self,
                                 height=35, 
                                 font=('Ubuntu Mono', 20), 
@@ -1185,10 +1192,10 @@ class SaveDialog(ctk.CTkToplevel):
                                 border_width=0,
                                 justify='center',
                                 corner_radius=0,
-                                placeholder_text='Addition to default name',
+                                placeholder_text='Input will replace default foldername',
                                 state='normal',
                                 )
-        self.add_to_filename.pack(pady=(10,0), fill='x', expand=True)
+        self.input_name.pack(pady=(10,0), fill='x', expand=True)
 
         self.button_frame = ctk.CTkFrame(
                                 self,
@@ -1227,9 +1234,15 @@ class SaveDialog(ctk.CTkToplevel):
         self.cancel_button.pack(side="right", padx=20, pady=10)
         
     def on_save(self):
-        self.result = self.add_to_filename.get()
+        global is_saved
+        
+        self.result = self.input_name.get()
         lines = plot_object.lines
-        path = backend.make_dir_measurement(selected_dict_name)
+        
+        if self.result != '':
+            path = backend.make_dir_measurement(self.result)
+        else:
+            path = backend.make_dir_measurement(selected_dict_name)
         
         backend.save_config(path, selected_dict, selected_dict_name)
     
@@ -1237,7 +1250,9 @@ class SaveDialog(ctk.CTkToplevel):
     
         backend.save_png(path, lines)
         
-        #backend.save_png(path, lines, selected_dict)
+        backend.save_png(path, lines, selected_dict, sweep_time)
+        
+        is_saved = True
         
         self.destroy()
         

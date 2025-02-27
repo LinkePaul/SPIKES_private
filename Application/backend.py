@@ -476,7 +476,7 @@ def make_dir_daily(path: str = r"/home/sonata/local_git/SPIKES_private/Measureme
 
     return daily_dir, date_time
     
-def make_dir_measurement(config: str) -> None:
+def make_dir_measurement(name: str) -> None:
     """Creates a timestamped directory for saving the current measurement.
     
     :return: None
@@ -485,7 +485,7 @@ def make_dir_measurement(config: str) -> None:
 
     time = date_time.strftime("%Hh%M")
     
-    measurement_dir = daily_dir + "/" + time + "-" + config
+    measurement_dir = daily_dir + "/" + time + "-" + name
     
     if not os.path.exists(measurement_dir):
         os.makedirs(measurement_dir)
@@ -543,47 +543,133 @@ def invert_color(color):
     inverted_color = tuple(1.0 - c for c in color)
     return inverted_color
 
-def save_png(path, lines, legend=False):
+def save_png(path, lines, legend=False, sweep_time=None):
     
     x_label = 'MHz'
     y_label = 'dBm'
     
-    path = os.path.join(path, "imgs_nolegend")
-    if not os.path.exists(path):
-        os.makedirs(path)
-    
-    fig = Figure(figsize=(10, 5), dpi=300, constrained_layout=True)
-    ax = fig.add_subplot()
-    
-    ax.grid(True, which='both', linestyle='--', linewidth=0.3, alpha=0.6)
-    
-    for line in lines:
-        # Invert the color of the line
-        inverted_color = invert_color(line.get_color())
-        new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=inverted_color, linewidth=line.get_linewidth())
-        ax.add_line(new_line)
-    ax.autoscale()
-    y_lim = ax.get_ylim()
-    x_lim = ax.get_xlim()
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-    
-    # Save the combined plot
-    fig.savefig(os.path.join(path, "combined_trace.png"))
-    plt.close(fig)
-    
-    for i, line in enumerate(lines):
+    if not legend: 
+        path = os.path.join(path, "imgs_nolegend")
+        if not os.path.exists(path):
+            os.makedirs(path)
+        
         fig = Figure(figsize=(10, 5), dpi=300, constrained_layout=True)
         ax = fig.add_subplot()
+        
         ax.grid(True, which='both', linestyle='--', linewidth=0.3, alpha=0.6)
-        new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=invert_color(line.get_color()), linewidth=line.get_linewidth()+1)
-        ax.add_line(new_line)
-        ax.set_ylim(y_lim[0], y_lim[1])
-        ax.set_xlim(x_lim[0], x_lim[1])
+        
+        for line in lines:
+            # Invert the color of the line
+            inverted_color = invert_color(line.get_color())
+            new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=inverted_color, linewidth=line.get_linewidth()+0.2)
+            ax.add_line(new_line)
+        ax.autoscale()
+        y_lim = ax.get_ylim()
+        x_lim = ax.get_xlim()
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
-        fig.savefig(os.path.join(path, f"trace_{i+1}.png"))
+        
+        # Save the combined plot
+        fig.savefig(os.path.join(path, "combined_trace.png"))
         plt.close(fig)
+        
+        for i, line in enumerate(lines):
+            fig = Figure(figsize=(10, 5), dpi=300, constrained_layout=True)
+            ax = fig.add_subplot()
+            ax.grid(True, which='both', linestyle='--', linewidth=0.3, alpha=0.6)
+            new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=invert_color(line.get_color()), linewidth=line.get_linewidth()+0.7)
+            ax.add_line(new_line)
+            ax.set_ylim(y_lim[0], y_lim[1])
+            ax.set_xlim(x_lim[0], x_lim[1])
+            ax.set_xlabel(x_label)
+            ax.set_ylabel(y_label)
+            fig.savefig(os.path.join(path, f"trace_{i+1}.png"))
+            plt.close(fig)
+    
+    elif type(legend) == dict: 
+        path = os.path.join(path, "imgs_legend")
+        if not os.path.exists(path):
+            os.makedirs(path)
+        
+        res_bw = value_parser(legend['res_bw'])
+        vid_bw = value_parser(legend['vid_bw'])
+        if sweep_time >= 10:
+            sweep_time = f"{int(sweep_time)} s"
+        elif sweep_time < 10 and sweep_time >= 1:
+            sweep_time = f"{sweep_time:.1f} s"
+        elif sweep_time < 1:
+            sweep_time = f"{sweep_time*1e3:.0f} ms"
+        
+        
+        if 'mode' in legend and legend['mode'] == 'FAST':
+            int_time = value_parser(legend['integration_time'], 's')
+            left_text_lines = ["Resolution BW:", "Video BW:", "Sweep Time:", "Integration Time:"]
+            right_text_lines = [res_bw, vid_bw, sweep_time, int_time]
+            text = "\n".join([f"{left:<17}{right:>9}" for left, right in zip(left_text_lines, right_text_lines)])
+        
+        elif 'mode' in legend and legend['mode'] == 'HIGH-RES':
+            left_text_lines = ["Resolution BW:", "Video BW:", "Sweep Time:"]
+            right_text_lines = [res_bw, vid_bw, sweep_time]
+            text = "\n".join([f"{left:<17}{right:>9}" for left, right in zip(left_text_lines, right_text_lines)])
+        
+        else:
+            text = ""
+        
+        fig = Figure(figsize=(10, 5), dpi=300, constrained_layout=True)
+        ax = fig.add_subplot()
+        
+        ax.grid(True, which='both', linestyle='--', linewidth=0.3, alpha=0.6)
+        
+        for line in lines:
+            inverted_color = invert_color(line.get_color())
+            new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=inverted_color, linewidth=line.get_linewidth()+0.3)
+            ax.add_line(new_line)
+            
+        ax.text(
+            0.99, 
+            0.98, 
+            text, 
+            transform=ax.transAxes, 
+            fontsize=10, 
+            fontfamily='monospace',
+            verticalalignment='top',
+            horizontalalignment='right',
+            bbox=dict(boxstyle='square', facecolor='wheat', alpha=0.5, edgecolor='wheat')
+            )
+        
+        ax.autoscale()
+        y_lim = ax.get_ylim()
+        x_lim = ax.get_xlim()
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        
+        # Save the combined plot
+        fig.savefig(os.path.join(path, "combined_trace.png"))
+        plt.close(fig)
+        
+        for i, line in enumerate(lines):
+            fig = Figure(figsize=(10, 5), dpi=300, constrained_layout=True)
+            ax = fig.add_subplot()
+            ax.grid(True, which='both', linestyle='--', linewidth=0.3, alpha=0.6)
+            new_line = Line2D(line.get_xdata(), line.get_ydata(), linestyle=line.get_linestyle(), color=invert_color(line.get_color()), linewidth=line.get_linewidth()+0.5)
+            ax.add_line(new_line)
+            ax.set_ylim(y_lim[0], y_lim[1])
+            ax.set_xlim(x_lim[0], x_lim[1])
+            ax.set_xlabel(x_label)
+            ax.set_ylabel(y_label)
+            ax.text(
+                0.99, 
+                0.98, 
+                text, 
+                transform=ax.transAxes, 
+                fontsize=10, 
+                fontfamily='monospace',
+                verticalalignment='top',
+                horizontalalignment='right',
+                bbox=dict(boxstyle='square', facecolor='wheat', alpha=0.5, edgecolor='wheat'),
+            )
+            fig.savefig(os.path.join(path, f"trace_{i+1}.png"))
+            plt.close(fig)
         
 if __name__ == "__main__":
     
@@ -591,16 +677,21 @@ if __name__ == "__main__":
         "start_freq": 1e6,
         "stop_freq": 1e9,
         "mode": "FAST",
+        "res_bw": 1000,
+        "vid_bw": 10000,
+        "integration_time": 0.1,
+        "sweep_time": 0.1,
     }
     
     config_name = "hoola_hoop"
+    
+    sweep_time = 0.1
     
     line_1 = Line2D(np.random.rand(2, 10)[0], np.random.rand(2, 10)[1], linewidth=0.2, color='yellow')
     line_2 = Line2D(np.random.rand(2, 10)[0], np.random.rand(2, 10)[1], linewidth=0.2, color='white')
     line_3 = Line2D(np.random.rand(2, 10)[0], np.random.rand(2, 10)[1], linewidth=0.2, color='green')
     
     lines = [line_1, line_2, line_3]
-    print(lines)
     path = make_dir_measurement(config_name)
     
     save_config(path, config_dict, config_name)
@@ -608,6 +699,6 @@ if __name__ == "__main__":
     save_traces(path, lines)
     
     save_png(path, lines)
-    
-    #save_png_legend(path, trace_data)
+
+    save_png(path, lines, config_dict, sweep_time)
     

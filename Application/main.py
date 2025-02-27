@@ -76,6 +76,10 @@ class App(ctk.CTk):
         if frames.plot_object.lines == [] and frames.progress_object.progress_bar.get() == 0:
             self.destroy()
             return
+        
+        elif frames.is_saved:
+            self.destroy()
+            return
 
         dialog = frames.ProceedDialog(self)
         result = dialog.show()
